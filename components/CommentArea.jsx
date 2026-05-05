@@ -1,17 +1,15 @@
-import { Component } from "react";
+import { useEffect, useState } from "react";
 import CommentList from "./CommentList";
 import { Spinner } from "react-bootstrap";
 import AddComment from "./AddComment";
 import Error from "./Error";
 
-class CommentArea extends Component {
-  state = {
-    comments: [],
-    error: false,
-    loading: true,
-  };
+const CommentArea = (props) => {
+  const [comments, setComments] = useState([]);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  getComments(asin) {
+  const getComments = (asin) => {
     fetch("https://striveschool-api.herokuapp.com/api/comments/" + asin, {
       headers: {
         Authorization:
@@ -26,48 +24,41 @@ class CommentArea extends Component {
         }
       })
       .then((data) => {
-        this.setState({ comments: data, loading: false });
+        setComments(data);
+        setLoading(false);
       })
       .catch((err) => {
         alert("Error fetching data: ", err);
-        this.setState({ ...this.state, loading: false, error: true });
+        setLoading(false);
+        setError(true);
       });
-  }
+  };
 
-  componentDidMount() {
-    this.getComments(this.props.asin);
-  }
+  useEffect(() => {
+    getComments(props.asin);
+  }, [props.asin]);
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.asin !== this.props.asin) {
-      this.getComments(this.props.asin);
-    }
-  }
-
-  render() {
-    console.log("RENDER COMMENTAREA");
-    return this.state.loading ? (
-      <Spinner animation="border" role="status">
-        <span className="visually-hidden">Loading...</span>
-      </Spinner>
-    ) : this.state.error ? (
-      <Error />
-    ) : (
-      <div onClick={(e) => e.stopPropagation()}>
-        <CommentList
-          asin={this.props.asin}
-          comments={this.state.comments}
-          setSuperState={(value) => this.setState(value)}
-          getComments={(value) => this.getComments(value)}
-        />
-        <AddComment
-          getComments={(value) => this.getComments(value)}
-          updateComments={(value) => this.setState(value)}
-          asin={this.props.asin}
-        />
-      </div>
-    );
-  }
-}
+  console.log("RENDER COMMENTAREA");
+  return loading ? (
+    <Spinner animation="border" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </Spinner>
+  ) : error ? (
+    <Error />
+  ) : (
+    <div onClick={(e) => e.stopPropagation()}>
+      <CommentList
+        asin={props.asin}
+        comments={comments}
+        getComments={(value) => getComments(value)}
+      />
+      <AddComment
+        getComments={(value) => getComments(value)}
+        updateComments={(value) => setComments(value)}
+        asin={props.asin}
+      />
+    </div>
+  );
+};
 
 export default CommentArea;
